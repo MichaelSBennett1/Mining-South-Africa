@@ -1,0 +1,209 @@
+---
+title: "Mining"
+author: "Michael Bennett"
+date: "12/10/2021"
+output: 
+  html_document:
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plotly)
+library(leaflet)
+library(sf)
+library(ggspatial)
+```
+
+```{r data, echo=FALSE, warning=FALSE, message=FALSE}
+mrds <- read.csv("D:/Data/Earth/Geology/mrds-csv/mrds.csv")
+mrdsSA <- mrds[c(8155:8157, 8218:8220, 20829, 20867:20876, 21042:21044, 21080, 21088:21089, 22016, 22658, 22831, 23251, 23697:23698, 23842:23843, 23892:23893, 37667:37677, 37679:37694, 37696:37731, 37733:37742, 37857:37860, 37903, 38069:38070, 38085, 38088, 38107:38109,
+38115:38125, 38127:38131, 38203), ]
+mrdsBatt <- mrds[c(23892, 95794, 178408, 273767, 297057), ]
+minfac <- read.csv("D:/Data/Earth/Geology/mining_data/minfac.csv", fileEncoding = "latin1")
+minfacSA <- minfac[c(5960:6094), ]
+minfacBatt <- minfac[c(6072, 6067:6071, 6086:6088, 6101, 6103:6105, 6110:6111), ]
+crater <- read.csv("D:/Data/Earth/Geology/impactCraterDiameterAge.csv")
+craterSA <- crater[c(174, 165, 110, 70), ]
+lat <- c(-26.997, -25.411, -26.467, -32.708)
+lon <- c(27.483, 28.073, 23.5, 24.292)
+craterSA1 <- craterSA
+craterSA1$Latitude <- lat
+craterSA1["Longitude"] <- lon
+craterSA1 <- subset(craterSA1, select = -c(X, X.1))
+```
+
+```{r shapefile, echo=FALSE, warning=FALSE, message=FALSE}
+africa <- st_read("D:/Data/Earth/Africa/South Africa/gadm36_ZAF_shp/gadm36_ZAF_0.shp", quiet = TRUE)
+countryweb <- "https://pkgstore.datahub.io/JohnSnowLabs/country-and-continent-codes-list/country-and-continent-codes-list-csv_csv/data/b7876b7f496677669644f3d1069d3121/country-and-continent-codes-list-csv_csv.csv"
+country.csv <- read.csv(countryweb)
+names(country.csv)[5] <- "GID_0"
+africaCountries <- subset(country.csv, Continent_Code == "AF")
+africa_shp <- subset(africa, GID_0 %in% africaCountries$GID_0 )
+```
+
+# South Africa Mining
+
+## Abstract
+
+### With the increase in demand of electric vehicles batteries will require a greater demand worldwide. The Democratic Republic of Congo along with Australia are the main contributors of minerals used in industrial batteries. Western Australia has substantial reserves of minerals like cobalt, lithium, and manganese. The economy in Western Australia is projected to develop rapidly because of the future mining programs. 
+
+### Lithium can be cut with a kitchen knife and floats on water. Compared with lithium's size, a large amount of power is stored inside. Other metals used in lithium-ion batteries include nickel, graphite, alumina, tin, tantalum, magnesium, and vanadium.
+
+### Data used in this project includes information about South Africa. Compiling shape files, CSV files, spatial analysis, and visual plots including charts and maps for a clear understanding of the project. Packages utilized in R Studio like ggplot2, leaflet, plotly, and dplyr provide a great perspective about world mining programs. R Markdown chunk coding and console rendering give easy insight about spatial data.     
+
+```{r map, echo=FALSE, warning=FALSE, message=FALSE}
+plot(africa_shp, col = "darkgreen", bg = "darkblue")
+```
+
+### What areas of the planet have the most mineral reserves and what will it take for the economy’s accomplishment of mining the minerals while efficiently supplying the world with enough lithium-ion batteries?
+
+```{r fortify, echo=FALSE, warning=FALSE, message=FALSE}
+africa_df = fortify(africa_shp)
+```
+
+### The theory about a scientific phenomenon describing minerals in the Earth’s crust is extensive. Asteroids hit the Earth millions of years ago and minerals fall with them. The search for craters is a start for people. Building mines in areas near craters then, processing the mines for minerals. Providing the minerals for industrial corporate use. Creating a market of electric vehicles for the world citizens. Have the economy find normal ease with the system over time.   
+
+### The data shows mining activity in South Africa. The largest crater Vredefort is positioned near the cluster of mines northeast. The Congo has larger reserves of minerals and then West Australia. Most mines are along the northern border of the countries Namibia, Botswana, Zimbabwe, and Mozambique.
+
+## Mines & Craters Map
+
+```{r points, echo=FALSE, warning=FALSE, message=FALSE}
+leaflet() %>% addProviderTiles("CartoDB.Positron") %>%
+    addMarkers(data = mrdsBatt, ~longitude, 
+                                ~latitude,
+               popup = paste("Company:", ~names, "<br>",
+                             "Location:", ~site_name, "<br>", 
+                             "Latitude:", ~latitude, "<br>", 
+                             "Longitude:", ~longitude, "<br>",
+                             "Status:", ~dev_stat, "<br>",
+                             "Operation:", ~oper_type),
+               label = ~as.character(commod1)) %>%
+    addMarkers(data = minfacBatt, ~longitude, 
+                                  ~latitude, 
+               popup = paste("Facility:", ~fac_type, "<br>",
+                             "Location:", ~location, "<br>", 
+                             "Latitude:", ~latitude, "<br>", 
+                             "Longitude:", ~longitude, "<br>",
+                             "Status:", ~status, "<br>",
+                             "Capacity:", ~capacity,
+                                          ~units),
+               label = ~as.character(commodity)) %>%
+    addMarkers(data = craterSA1, ~Longitude, 
+                                 ~Latitude, 
+               popup = paste("Crater:", ~StructureName, "<br>", 
+                           "Latitude:", ~Latitude, "<br>", 
+                           "Longitude:", ~Longitude, "<br>",
+                           "Diameter (km):", ~Diameter.km., "<br>",
+                           "Age (Ma):", ~Age.Ma..), 
+               label = ~as.character(StructureName))
+```
+
+### Asteroids impacting Earth carry minerals like iron, nickel, iridium, palladium, platinum, gold, and magnesium. Asteroids travel through space for millions of years. High temperatures from the formation of the solar system cause iron cores and space collisions create melted ice flowing gullies. The water causes chemical reactions leading to rare metallic asteroids. 
+
+```{r chart,fig.width=8, fig.height=6, echo=FALSE, warning=FALSE, message=FALSE, fig.show='hide'}
+print(
+  mine_gg_africa <- ggplot(NULL) +
+  geom_point(data = mrdsBatt, aes(x = commod1, y = site_name,
+                                  stroke = 2, col = names)) +
+  theme_bw() +
+     theme(axis.text.x = element_text(angle = 0), 
+           axis.title.x = element_text(margin = margin(t = 7))) +
+  guides(size = "none") +
+  geom_point(data = minfacBatt, aes(x = commodity, stroke = 2, 
+                                    y = location, col = fac_type)) +
+                                   
+  scale_x_discrete(labels = c('Lithium', 'Manganese','Nickel', 'Platinum', 'Platinum')) +
+  labs(title = "Battery Metals", 
+       subtitle = "South Africa", 
+       x = "Metal", 
+       y = "Location", 
+       col = "Facility"))
+```
+
+### These metals are used in industrial batteries. Building lithium-ion batteries can be dangerious. Lithium batteries are more explosive than TNT explosives. Construction of the battery must be properly done for all uses.  
+
+```{r ggplotly mrds, echo=FALSE, warning=FALSE, message=FALSE}
+ggplotly(mine_gg_africa, tooltip = c("none")) %>%
+    style(hoverinfo = c("text1"))
+```
+
+```{r pointplot, fig.width=8, fig.height=6, echo=FALSE, warning=FALSE, message=FALSE, fig.show='hide'}
+mine_gg_africa1 <- ggplot(craterSA1, aes(x = Age.Ma.., y = Diameter.km., 
+                                         col = StructureName)) +
+  geom_count(size = 3) + 
+  scale_color_manual("Crater", labels = c("Kalkkop", "Morokweng", "Tswaing", "Vredefort"), values = c("red3", "navyblue", "darkgreen", "green1")) +
+  theme_bw() +
+  theme(legend.position =  c(0.87, 0.25)) +
+  labs(title = "Craters", subtitle = "South Africa", 
+       x = "Age (Ma)", 
+       y = "Diameter (km)",
+       col = "Crater")
+mine_gg_africa1
+```
+
+### Craters in South Africa were formed a long time ago. The asteroids that formed the craters were made of metals like iron, cobalt, and platinum. The most southern region of South Africa has deposites of minerals. Exploring these areas will provide additional mining sites.  
+
+```{r ggplotly crater, echo=FALSE, warning=FALSE, message=FALSE}
+ggplotly(mine_gg_africa1, tooltip = "none", legend = col) %>%
+    style(hoverinfo = "y")
+```
+
+```{r clustering, echo=FALSE, message=FALSE, warning=FALSE}
+leaflet() %>%
+  addTiles() %>%
+  addMarkers(data = mrdsSA, ~longitude, 
+             ~latitude, popup = paste("Primary:", mrdsSA$commod1, "<br>", 
+                           "Secondary:", mrdsSA$commod2, "<br>", 
+                           "Tertiary:", mrdsSA$commod3, "<br>",
+                           "Operation:", mrdsSA$oper_type, "<br>",
+                           "Status:", mrdsSA$dev_stat, "<br>", 
+                           "Company:", mrdsSA$names, "<br>", 
+                           "Rock:", mrdsSA$hrock_type, "<br>", 
+                           "State:", mrdsSA$state, "<br>",
+                           "Ore:", mrdsSA$ore, "<br>",
+                           "Form:", mrdsSA$orebody_fm), 
+                        label = ~as.character(site_name), 
+                        clusterOptions = markerClusterOptions()) %>%
+  addMarkers(data = minfacSA, ~longitude, 
+                              ~latitude, popup = paste(
+                                "Primary:", minfacSA$commodity, "<br>", 
+                                "Facility:", minfacSA$fac_type, "<br>", 
+                                "Company:", minfacSA$op_comp, "<br>",
+                                "Status:", minfacSA$status, "<br>", 
+                                "Capacity:", minfacSA$capacity, 
+                                "", minfacSA$units), 
+                        label = ~as.character(location), 
+                        clusterOptions = markerClusterOptions()) %>%
+  addMarkers(data = craterSA1, ~Longitude, 
+                               ~Latitude, 
+               popup = paste("Crater:", ~StructureName, "<br>", 
+                           "Latitude:", ~Latitude, "<br>", 
+                           "Longitude:", ~Longitude, "<br>",
+                           "Diameter (km):", ~Diameter.km., "<br>",
+                           "Age (Ma):", ~Age.Ma..), 
+               label = ~as.character(StructureName))
+```
+
+### Takeaways from this project include geologist adventurers traveling to West Australia searching for craters. Other places on Earth include Quebec, Canada where Manacougan Crater is. Experts will identify metallic asteroid formed craters. Mines will construct in the area where easiest travel from large cities can be established. Mineral identification for proper mine designation needs prioritized. 
+
+### Initiation of electric vehicles will begin with higher standards of emission testing for vehicles therefore, eliminating old vehicles with inadequate mobility from the roads. As well as low-cost basic electric cars for all citizens around the world.
+
+### Building mines of mostly automatic operation are essential for the safety of workers. Schools will construct courses around a fully automated mining program involving miners to be extensively trained as high paid machine operators. 
+
+### Other than electric cars an increase in demand has begun with electric bikes and skateboards. Getting around town on something requiring little effort because of battery power doing all the work is efficiant. The best form of transformation on college campus is bike or skateboard. Climate change and improving the environment can continue in a proficiant way if people travel with these electric bikes and skateboards. Some people drive a few blocks in their deisel truck because they lack the physical endurance for peddeling a bike or pushing a skateboard. With the ease of placing a battery on the bike after charging up somewhere in their garage, the person can travel around in a cleaner way promoting a better environment. 
+
+
+## References
+
+### https://www.cmewa.com.au/about/wa-resources/battery-minerals/
+### https://earthobservatory.nasa.gov/images/92689/vredefort-crater
+### https://geology.com/articles/vredefort-dome.shtml
+### https://www.generalkinematics.com/blog/mining-in-space/
+### https://mrdata.usgs.gov/mrds/
+### https://mrdata.usgs.gov/mineral-operations/
+### http://passc.net/EarthImpactDatabase/New%20website_05-2018/Index.html
+
+### 2021 | Michael Bennett 
